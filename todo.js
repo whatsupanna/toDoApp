@@ -1,8 +1,10 @@
-module.exports = class Todo {
-    constructor({title, id, completed, deleted}) {
+const PropertyBag = require('./PropertyBag');
+
+module.exports = class Todo extends PropertyBag {
+    constructor({title, id, completed}) {
+		super();
         this.title = title;
         this.id = id;
         this.completed = completed
-        this.deleted = deleted
     }
 }
