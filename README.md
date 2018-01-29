@@ -17,12 +17,13 @@ you've built easy to use and easy on the eyes? :eyes:
 - [ ] Create a repo (ideally on github) and make a `init` commit
 - [ ] Commit often, with high quality comments
 - [ ] Write readable, performant code
-- [ ] Fix all the bugs
-- [ ] Add a feature that allows users to complete tasks
-- [ ] Add a feature that allows users to delete tasks
-- [ ] Add a feature that allows the completion of all tasks
-- [ ] Add a feature that allows the deletion of all tasks
+<!-- - [ ] Fix all the bugs -->
+<!-- - [ ] Add a feature that allows users to complete tasks -->
+<!-- - [ ] Add a feature that allows users to delete tasks -->
+<!-- - [ ] Add a feature that allows the completion of all tasks -->
+<!-- - [ ] Add a feature that allows the deletion of all tasks -->
 - [ ] Add caching to the client app so that when we lose our connection we can still see our TODO's
+I want to be able to load the to do list in a read only matter
 - [ ] Give it some UX/UI :heart:, our approach is make it easy to use- _then_ make it beautiful
 
 ## Set Up
