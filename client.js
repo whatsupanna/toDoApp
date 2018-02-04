@@ -19,14 +19,13 @@ function add() {
     // TODO: refocus the element
 }
 
+
 function deleteAll() {
-    console.warn(event);
     // Emit the deleted data to the server
     server.emit('deleteAll', {});
 }
 
 function completeAll() {
-    console.warn(event);
     // Emit the new info to the server
     server.emit('completeAll', {});
 }
@@ -37,8 +36,13 @@ function removeAllChildren(el) {
     }
 }
 
-function render(todo) {
+function renderEmptyState(){
+    const emptyState = document.createTextNode("All done!");
+    emptyState.classList.add('emptyState');
+    list.append(emptyState);
+}
 
+function render(todo) {
     let listItem = findInDom(todo);
     //it's not not. give me a boolean
     const existed =!!listItem;
@@ -133,6 +137,8 @@ document.body.addEventListener('click',function(e){
 // This event is for (re)loading the entire list of todos from the server
 server.on('load', (todos) => {
     Object.keys(todos).forEach(id => render(todos[id]));
+    // should I be loading the cache here instead? 
+
 });
 
 server.on('completedById', (todo) => {
@@ -156,26 +162,42 @@ server.on('newTodo', (todo) => {
     render(todo);
 });
 
+//listen on a disconnect event, push into local storage
 server.on('disconnect', () => {
-  console.log('disconnected');
   // for caching 
+  console.log('disconnect');
+  const cache = [];
   document.querySelectorAll(`[data-id]`).forEach(function(el, i){
-    console.log(el.innerHTML);
-    localStorage[ 'toDo'] = el.innerHTML;
-  }); 
+    cache.push({
+        text:el.innerText,
+        id:el.dataset.id
+        });
+  });
 
-    //listen on a disconnect event, push into local storage
+  setLocalStorage(cache);
 });
+
 
 server.on('reconnect', () => {
-  console.log('reconnect');
-  //retrieve
-  let test  = localStorage[ 'toDo' ];
-  console.log(test);
-      // for caching 
+    //retrieve
     // on reconnect send them to the server
     //then clear local storage
+    console.log('reconnect');
+
+    const todos = getLocalStorage();
+    todos.forEach(todo => render(todo));
 });
+
+function setLocalStorage(itemToSet) {
+    return localStorage.setItem("todos",JSON.stringify(itemToSet));
+}
+
+function getLocalStorage() {
+    return JSON.parse(localStorage.getItem("todos"));
+    //this will work if the cache data is the same as the data from the server. instead, the cached data is old data (when you connect send the same 3). 
+    //because the server doesn't actually reflect changes i have made to the todos in a manner that is persistent. 
+    //in theory this would work if this was a real server. 
+}
 
 
 
