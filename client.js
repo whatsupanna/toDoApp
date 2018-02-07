@@ -1,5 +1,7 @@
-const server = io('http://localhost:3003/');
+const server = io.connect('http://localhost:3003/');
 const list = document.getElementById('todo-list');
+let firstRender = false;
+
 // NOTE: These are all our globally scoped functions for interacting with the server
 // This function adds a new todo from the input
 function add() {
@@ -16,7 +18,6 @@ function add() {
     }
     // Clear the input
     input.value = '';
-    // TODO: refocus the element
 }
 
 
@@ -136,57 +137,70 @@ document.body.addEventListener('click',function(e){
 // NOTE: These are listeners for events from the server
 // This event is for (re)loading the entire list of todos from the server
 server.on('load', (todos) => {
-    Object.keys(todos).forEach(id => render(todos[id]));
-    // should I be loading the cache here instead? 
+    // Delete things that were deleted on the server
+    Array.from(document.querySelectorAll(`[data-id]`)).forEach(el => {
+    
+        const id = el.dataset.id;
+        if (!todos[id]) {
+            el.parentElement.removeChild(el);
+        }
+    });
 
+    Object.keys(todos).forEach(id => render(todos[id]));
+    firstRender = true;
+    setCache();
 });
 
 server.on('completedById', (todo) => {
     renderCompleted(todo);
+    setCache();
 });
 
 server.on('deletedById', (todo) => {
     renderDeleted(todo);
+    setCache();
 });
 
 server.on('deleteAll', () => {
     renderDeletedAll();
+    setCache();
 });
 
 server.on('completeAll', (todos) => {
     renderAllCompleted(todos);
+    setCache();
 });
 
 //get data on this event and then post it
 server.on('newTodo', (todo) => {
     render(todo);
+    setCache();
 });
 
-//listen on a disconnect event, push into local storage
-server.on('disconnect', () => {
-  // for caching 
-  console.log('disconnect');
+server.on('reconnect', () => {
+    //TODO: Replay writes to the server (if we want to support offline-writes)
+});
+
+server.on('connect_error', () => {
+    if (!firstRender) {
+        const todos = getLocalStorage() || [];
+        todos.forEach(todo => render(todo));
+        firstRender = true;
+    }
+})
+
+function setCache(){
   const cache = [];
   document.querySelectorAll(`[data-id]`).forEach(function(el, i){
     cache.push({
-        text:el.innerText,
-        id:el.dataset.id
-        });
+        title:el.innerText,
+        id:el.dataset.id,
+        completed: el.classList.contains("completed")
+    });
   });
 
   setLocalStorage(cache);
-});
-
-
-server.on('reconnect', () => {
-    //retrieve
-    // on reconnect send them to the server
-    //then clear local storage
-    console.log('reconnect');
-
-    const todos = getLocalStorage();
-    todos.forEach(todo => render(todo));
-});
+}
 
 function setLocalStorage(itemToSet) {
     return localStorage.setItem("todos",JSON.stringify(itemToSet));
@@ -194,9 +208,7 @@ function setLocalStorage(itemToSet) {
 
 function getLocalStorage() {
     return JSON.parse(localStorage.getItem("todos"));
-    //this will work if the cache data is the same as the data from the server. instead, the cached data is old data (when you connect send the same 3). 
-    //because the server doesn't actually reflect changes i have made to the todos in a manner that is persistent. 
-    //in theory this would work if this was a real server. 
+
 }
 
 
